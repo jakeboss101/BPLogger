@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>BP Logger</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' ry='20' fill='white'/><text x='50' y='60' font-size='55' text-anchor='middle' fill='red'>✚BP</text></svg>">
 <style>
 :root {
   --accent: #2196f3;
@@ -19,15 +20,15 @@ body {
   margin: 0;
   padding: 10px;
   color: #333;
+  text-align: center;
 }
 
 h2 {
-  text-align: center;
   margin: 10px 0 15px;
   font-size: 20px;
 }
 
-video, canvas, button {
+video, canvas, #photoPreview, button {
   width: 100%;
   margin-bottom: 10px;
   border-radius: 12px;
@@ -50,12 +51,24 @@ button:active { transform: scale(0.97); }
 #captureBtn { background: var(--accent); }
 #saveBtn { background: var(--accent); }
 #clearBtn { background: var(--danger); }
+#newEntryBtn { background: #d32f2f; }
+
+.note-section {
+  margin-top: 10px;
+}
+
+.note-section h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
 
 .note-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
+  justify-content: center;
 }
 
 .note-buttons div { position: relative; flex: 1; }
@@ -95,17 +108,25 @@ button:active { transform: scale(0.97); }
   font-size: 14px;
 }
 
+#photoPreview {
+  width: 60%;
+  max-width: 300px;
+  display: none;
+  margin: 10px auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
 #log {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  max-height: 60vh; /* Scrollable log */
+  max-height: 60vh;
   overflow-y: auto;
   padding-bottom: 10px;
 }
 
-/* Compact entries for small screen */
 .entry {
   display: flex;
   align-items: center;
@@ -143,13 +164,18 @@ button:active { transform: scale(0.97); }
 </head>
 <body>
 
-<h2>📸 BP Logger</h2>
+<h2>✚ BP Logger</h2>
+<button id="newEntryBtn" style="display:none;">✚ Add New BP Reading</button>
 
 <video id="video" autoplay playsinline></video>
-<button id="captureBtn">Capture Photo</button>
 <canvas id="canvas" style="display:none;"></canvas>
+<img id="photoPreview" alt="BP Preview">
+<button id="captureBtn">Take Photo of BP Reading</button>
 
-<div class="note-buttons"></div>
+<div class="note-section">
+  <h3>Select the medication taken before this reading</h3>
+  <div class="note-buttons"></div>
+</div>
 
 <button id="saveBtn">Save Entry</button>
 <div id="log"></div>
@@ -158,7 +184,10 @@ button:active { transform: scale(0.97); }
 <script>
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
+const photoPreview = document.getElementById('photoPreview');
 const logDiv = document.getElementById('log');
+const noteSection = document.querySelector('.note-section');
+const newEntryBtn = document.getElementById('newEntryBtn');
 
 let entries = JSON.parse(localStorage.getItem('bpEntries')) || [];
 let currentNotes = [];
@@ -201,8 +230,10 @@ function renderNoteButtons() {
 
   const addBtnWrapper = document.createElement('div');
   const addBtn = document.createElement('button');
-  addBtn.textContent = '+';
+  addBtn.textContent = '+ Add Medicine';
   addBtn.style.backgroundColor = basicColors[Math.floor(Math.random() * basicColors.length)];
+  addBtn.style.fontWeight = '600';
+  addBtn.style.fontSize = '14px';
   addBtn.onclick = () => {
     const name = prompt('Enter medicine name:');
     if(!name) return;
@@ -229,9 +260,9 @@ function toggleNoteSelection(name, color) {
 
 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
 .then(stream => video.srcObject = stream)
-.catch(err => alert('Camera access denied'));
+.catch(() => alert('Camera access denied'));
 
-// Capture photo ~10KB
+// 📸 Capture photo (~10KB)
 document.getElementById('captureBtn').onclick = () => {
   const ctx = canvas.getContext('2d');
   canvas.width = video.videoWidth;
@@ -240,18 +271,24 @@ document.getElementById('captureBtn').onclick = () => {
 
   let quality = 0.9;
   let dataURL = canvas.toDataURL('image/jpeg', quality);
-  while((dataURL.length/1024 > 10) && quality > 0.05) {
+  while ((dataURL.length / 1024 > 10) && quality > 0.05) {
     quality -= 0.05;
     dataURL = canvas.toDataURL('image/jpeg', quality);
   }
   capturedImage = dataURL;
-  canvas.style.display = 'block';
+
+  // Hide camera, show resized preview
+  video.style.display = 'none';
+  canvas.style.display = 'none';
+  photoPreview.src = capturedImage;
+  photoPreview.style.display = 'block';
+  document.getElementById('captureBtn').style.display = 'none';
 };
 
-// Save entry
+// 💾 Save entry
 document.getElementById('saveBtn').onclick = () => {
-  if(!capturedImage) return alert('Please capture a photo');
-  if(currentNotes.length === 0) return alert('Please select at least one medicine');
+  if(!capturedImage) return alert('Please take a photo first');
+  if(currentNotes.length === 0) return alert('Please select at least one medication');
 
   const now = new Date();
   entries.unshift({
@@ -265,23 +302,32 @@ document.getElementById('saveBtn').onclick = () => {
   localStorage.setItem('bpEntries', JSON.stringify(entries));
   renderLog();
 
+  // Reset view
   capturedImage = null;
   currentNotes = [];
   document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('active'));
   canvas.style.display = 'none';
-
-  if(video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
-    video.srcObject = null;
-  }
-
-  video.style.display = 'none';
-  document.querySelector('.note-buttons').style.display = 'none';
+  photoPreview.style.display = 'none';
+  noteSection.style.display = 'none';
   document.getElementById('captureBtn').style.display = 'none';
   document.getElementById('saveBtn').style.display = 'none';
+  video.style.display = 'none';
+  newEntryBtn.style.display = 'block';
 };
 
-// Clear all
+// 🆕 New Entry button
+newEntryBtn.onclick = () => {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  .then(stream => video.srcObject = stream);
+
+  video.style.display = 'block';
+  document.getElementById('captureBtn').style.display = 'block';
+  document.getElementById('saveBtn').style.display = 'block';
+  noteSection.style.display = 'block';
+  newEntryBtn.style.display = 'none';
+};
+
+// 🗑️ Clear all entries
 document.getElementById('clearBtn').onclick = () => {
   const code = prompt('Enter 1234 to clear all entries:');
   if(code !== '1234') return;
@@ -290,7 +336,7 @@ document.getElementById('clearBtn').onclick = () => {
   renderLog();
 };
 
-// Render log
+// 🧾 Render log
 function renderLog() {
   logDiv.innerHTML = entries.map(e => {
     const isLate = e.hour >= 20;
