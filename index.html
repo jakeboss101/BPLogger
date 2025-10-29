@@ -1,376 +1,426 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Home Screen Icon -->
+<link rel="apple-touch-icon" sizes="180x180" href="bp-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="bp-icon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="bp-icon.png">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>BP Logger</title>
+<link rel="icon" href="bp-icon.png" type="image/png">
+<link rel="apple-touch-icon" href="bp-icon.png">
 <style>
-  :root {
-    --accent: #2196f3;
-    --danger: #f44336;
-    --bg: #fafafa;
-    --card-bg: #fff;
-    --late-bg: #e0e0e0;
+:root {
+  --accent: #2196f3;
+  --danger: #f44336;
+  --bg: #fafafa;
+  --card-bg: #fff;
+  --late-bg: #e0e0e0;
+}
 
-    --pre-nif: #4caf50;
-    --post-nif: #2196f3;
-    --post-iso: #f44336;
-    --pre-doxa: #ff9800;
-    --post-doxa: #9c27b0;
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  margin: 0;
+  padding: 16px;
+  color: #333;
+  text-align: center;
+}
 
-  body {
-    font-family: Arial, sans-serif;
-    background: var(--bg);
-    margin: 0;
-    padding: 24px;
-    color: #111;
-    font-size: 22px;
-    line-height: 1.6;
-  }
+h2 {
+  text-align: center;
+  margin: 12px 0 18px;
+  font-size: 28px;
+}
 
-  h2 {
-    text-align: center;
-    margin-bottom: 24px;
-    font-size: 34px;
-    font-weight: 900;
-  }
+video, canvas, #photoPreview, button {
+  width: 100%;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
 
-  video, canvas, img, button {
-    width: 100%;
-    margin-bottom: 18px;
-    border-radius: 20px;
-    box-sizing: border-box;
-  }
+button {
+  padding: 18px;
+  font-size: 20px;
+  border: none;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  border-radius: 16px;
+}
 
-  button {
-    padding: 24px;
-    font-size: 26px;
-    border: none;
-    font-weight: 800;
-    color: white;
-    cursor: pointer;
-    border-radius: 20px;
-    transition: background 0.2s, transform 0.1s;
-  }
+button:active { transform: scale(0.97); }
 
-  button:active { transform: scale(0.97); }
+#captureBtn, #newEntryBtn { background: var(--accent); }
+#saveBtn { background: var(--accent); }
+#clearBtn { background: var(--danger); }
 
-  #captureBtn, #saveBtn, #addEntryBtn, #doneBtn { background: var(--accent); }
-  #clearBtn { background: var(--danger); }
+.note-section {
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #444;
+}
 
-  .divider {
-    height: 8px;
-    background: black;
-    border-radius: 4px;
-    margin: 24px 0;
-  }
+.note-section div.tip {
+  font-style: italic;
+  font-size: 16px;
+  margin-top: 6px;
+  color: #555;
+}
 
-  .note-section-title {
-    text-align: center;
-    font-weight: 900;
-    font-size: 28px;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-  }
+.note-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  justify-content: center;
+}
 
-  .tip-text {
-    font-style: italic;
-    font-size: 22px;
-    color: #555;
-    margin-bottom: 16px;
-    text-align: center;
-  }
+.note-buttons div { position: relative; flex: 1; }
 
-  .note-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
+.note-buttons button {
+  width: 100%;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  opacity: 0.9;
+  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+  padding: 16px;
+  font-size: 18px;
+}
 
-  .note-buttons button {
-    flex: 1;
-    min-width: 180px;
-    padding: 22px;
-    color: #fff;
-    border: none;
-    font-weight: 800;
-    font-size: 22px;
-    opacity: 0.9;
-    transition: opacity 0.2s, transform 0.1s;
-  }
+.note-buttons button.active {
+  outline: 3px solid #00000033;
+  opacity: 1;
+  transform: scale(1.05);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+  border: 2px solid #333;
+}
 
-  .note-buttons button.active {
-    outline: 6px solid #00000080;
-    opacity: 1;
-    transform: scale(1.03);
-  }
+.note-buttons span {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  background-color: #f44336;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+}
 
-  .note-pre-nif { background: var(--pre-nif); }
-  .note-post-nif { background: var(--post-nif); }
-  .note-post-iso { background: var(--post-iso); }
-  .note-pre-doxa { background: var(--pre-doxa); }
-  .note-post-doxa { background: var(--post-doxa); }
+#photoPreview {
+  width: 70%;
+  max-width: 360px;
+  display: none;
+  margin: 12px auto;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
 
-  /* Selected medicines box */
-  .selected-medicine {
-    position: relative;
-    display: inline-block;
-    background: var(--accent);
-    color: white;
-    font-size: 22px;
-    font-weight: 700;
-    padding: 12px 16px;
-    border-radius: 20px;
-    margin: 6px;
-  }
+#log {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-bottom: 10px;
+}
 
-  .selected-medicine .delete-btn {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: red;
-    color: white;
-    font-weight: 900;
-    font-size: 22px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
+.entry {
+  display: flex;
+  align-items: center;
+  border-radius: 16px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  padding: 12px;
+  width: 95%;
+  background: var(--card-bg);
+  transition: transform 0.2s ease;
+}
 
-  .entry {
-    display: flex;
-    align-items: center;
-    border-radius: 24px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    margin-bottom: 16px;
-    padding: 18px;
-  }
+.entry:hover { transform: translateY(-1px); }
 
-  .entry div { flex: 1; }
-  .entry strong { font-size: 24px; color: #000; display: block; margin-bottom: 6px; }
-  .entry span { font-size: 24px; }
-  .entry img {
-    width: 120px;
-    height: auto;
-    margin-left: 10px;
-    border-radius: 16px;
-    object-fit: cover;
-  }
+.entry div { flex: 1; }
+
+.entry strong { font-size: 16px; color: #111; }
+
+.entry img {
+  max-width: 90px;
+  max-height: 70px;
+  margin-left: 12px;
+  border-radius: 12px;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.entry img:active { transform: scale(1.05); }
+
+@media (max-width: 400px) {
+  h2 { font-size: 24px; }
+  .entry img { max-width: 30vw; max-height: 22vw; }
+  button { font-size: 18px; padding: 14px; }
+  .note-section { font-size: 18px; }
+  .note-section div.tip { font-size: 15px; }
+  .note-buttons button { font-size: 16px; padding: 14px; }
+}
+
+/* Install prompt for iPhone */
+#installPrompt {
+  display:none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #2196f3;
+  color: white;
+  padding: 16px;
+  font-size: 18px;
+  text-align: center;
+  z-index: 9999;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+#installPrompt button {
+  margin-left: 12px;
+  background: #f44336;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
 
-<h2>📸 BP Logger</h2>
+<h2>BP Logger</h2>
 
-<button id="addEntryBtn">Add Entry</button>
+<div id="installPrompt">
+  📌 To use this app easily, tap “Share” → “Add to Home Screen”
+  <button id="closeInstallPrompt">✖</button>
+</div>
 
-<video id="video" autoplay playsinline style="display:none;"></video>
-<img id="preview" style="display:none;" />
+<button id="newEntryBtn" style="display:none;">✚ Take Photo of Blood Pressure Monitor Reading</button>
+
+<video id="video" autoplay playsinline></video>
 <canvas id="canvas" style="display:none;"></canvas>
-<button id="captureBtn" style="display:none;">Capture Photo</button>
+<img id="photoPreview" alt="BP Preview">
 
-<div class="divider" style="display:none;" id="topDivider"></div>
-<div class="note-section-title" id="noteTitle" style="display:none;">Select the Medicine</div>
-<div class="tip-text" id="tipText" style="display:none;">
-  Tip: Here you can choose one or more medicines to record your blood pressure. Use “Pre” to log a reading before your dose, and “Post” to log a reading after taking your medicine. “Pre-Lisinopril” and “Post-Lisinopril” are shown as examples.
+<button id="captureBtn">Take Photo of Blood Pressure Monitor Reading</button>
+
+<hr style="border: 2px solid black; border-radius: 4px; margin: 12px 0;">
+<div class="note-section">
+  <h2>Select Medicine<h2>
+  <div class="tip">
+    Tip: Here you can choose one or more medicines to record your blood pressure. Use “Pre” to log a reading before your dose, and “Post” to log a reading after taking your medicine.
+  </div><br>
 </div>
 
-<div class="note-buttons" id="noteButtons" style="display:none;">
-  <button class="note-btn note-pre-nif">Pre-Nifedipine</button>
-  <button class="note-btn note-post-nif">Post-Nifedipine</button>
-  <button class="note-btn note-post-iso">Post-Isosorbide</button>
-  <button class="note-btn note-pre-doxa">Pre-Doxazosin</button>
-  <button class="note-btn note-post-doxa">Post-Doxazosin</button>
-</div>
+<div class="note-buttons"></div>
 
-<div id="selectedContainer" style="margin-bottom:16px;"></div>
-
-<div class="divider" style="display:none;" id="bottomDivider"></div>
-
-<button id="saveBtn" style="display:none;">Save Entry</button>
-<button id="doneBtn" style="display:none;">Done</button>
-
+<button id="saveBtn">Save</button>
+<hr style="border: 2px solid black; border-radius: 4px; margin: 12px 0;">
 <div id="log"></div>
 <button id="clearBtn">Clear All</button>
 
 <script>
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
-const preview = document.getElementById('preview');
-const captureBtn = document.getElementById('captureBtn');
-const saveBtn = document.getElementById('saveBtn');
-const doneBtn = document.getElementById('doneBtn');
-const addEntryBtn = document.getElementById('addEntryBtn');
-const noteButtonsDiv = document.getElementById('noteButtons');
-const noteTitle = document.getElementById('noteTitle');
-const topDivider = document.getElementById('topDivider');
-const bottomDivider = document.getElementById('bottomDivider');
-const tipText = document.getElementById('tipText');
-const selectedContainer = document.getElementById('selectedContainer');
 const logDiv = document.getElementById('log');
+const photoPreview = document.getElementById('photoPreview');
+const newEntryBtn = document.getElementById('newEntryBtn');
 
 let entries = JSON.parse(localStorage.getItem('bpEntries')) || [];
-let selectedNotes = [];
+let currentNotes = [];
 let capturedImage = null;
-let stream = null;
 
-renderLog();
+let medications = JSON.parse(localStorage.getItem('medications')) || [
+  { name: "Pre-Lisinopril", color: "#4caf50" },
+  { name: "Post-Lisinopril", color: "#9c27b0", textColor: "#fff" }
+];
 
-async function startCamera() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    video.srcObject = stream;
-    video.style.display = 'block';
-    captureBtn.style.display = 'block';
-    saveBtn.style.display = 'block';
-    doneBtn.style.display = 'block';
-    noteButtonsDiv.style.display = 'flex';
-    noteTitle.style.display = 'block';
-    topDivider.style.display = 'block';
-    bottomDivider.style.display = 'block';
-    tipText.style.display = 'block';
-    selectedContainer.innerHTML = '';
-    capturedImage = null;
-    selectedNotes = [];
-    document.querySelectorAll('.note-btn').forEach(btn => btn.classList.remove('active'));
-  } catch {
-    alert('Camera access denied');
-  }
-}
+const basicColors = ['#f44336','#2196f3','#4caf50','#ff9800','#9c27b0','#00bcd4','#ffc107'];
 
-function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-    stream = null;
-  }
-}
+function renderNoteButtons() {
+  const container = document.querySelector('.note-buttons');
+  container.innerHTML = '';
+  medications.forEach((med, idx) => {
+    const wrapper = document.createElement('div');
+    const btn = document.createElement('button');
+    btn.textContent = med.name;
+    btn.style.backgroundColor = med.color;
+    if(med.textColor) btn.style.color = med.textColor;
+    btn.classList.add('note-btn');
+    btn.onclick = () => toggleNoteSelection(med.name, med.color);
+    wrapper.appendChild(btn);
 
-addEntryBtn.onclick = () => {
-  addEntryBtn.style.display = 'none';
-  startCamera();
-};
-
-// Medicine selection
-document.querySelectorAll('.note-btn').forEach(btn => {
-  btn.onclick = () => {
-    const note = btn.textContent;
-    if (selectedNotes.includes(note)) return; // already added
-
-    selectedNotes.push(note);
-    btn.classList.add('active');
-
-    const medDiv = document.createElement('div');
-    medDiv.className = 'selected-medicine';
-    medDiv.textContent = note;
-
-    const delBtn = document.createElement('div');
-    delBtn.className = 'delete-btn';
+    const delBtn = document.createElement('span');
     delBtn.textContent = '×';
-    delBtn.onclick = () => {
-      selectedContainer.removeChild(medDiv);
-      selectedNotes = selectedNotes.filter(n => n !== note);
-      btn.classList.remove('active');
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      const code = prompt(`Type 1234 to delete medicine "${med.name}":`);
+      if(code === '1234') {
+        medications.splice(idx, 1);
+        localStorage.setItem('medications', JSON.stringify(medications));
+        renderNoteButtons();
+      }
     };
+    wrapper.appendChild(delBtn);
+    container.appendChild(wrapper);
+  });
 
-    medDiv.appendChild(delBtn);
-    selectedContainer.appendChild(medDiv);
+  const addBtnWrapper = document.createElement('div');
+  const addBtn = document.createElement('button');
+  addBtn.textContent = '+ Add Medicine';
+  addBtn.style.fontWeight = '700';
+  addBtn.style.fontSize = '18px';
+  addBtn.style.backgroundColor = basicColors[Math.floor(Math.random() * basicColors.length)];
+  addBtn.onclick = () => {
+    const name = prompt('Enter medicine name:');
+    if(!name) return;
+    const color = basicColors[Math.floor(Math.random() * basicColors.length)];
+    medications.push({ name, color });
+    localStorage.setItem('medications', JSON.stringify(medications));
+    renderNoteButtons();
   };
-});
+  addBtnWrapper.appendChild(addBtn);
+  container.appendChild(addBtnWrapper);
+}
 
-captureBtn.onclick = async () => {
-  if (video.style.display !== 'none') {
-    const ctx = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    capturedImage = canvas.toDataURL('image/png');
-
-    stopCamera();
-    video.style.display = 'none';
-    preview.src = capturedImage;
-    preview.style.display = 'block';
-    captureBtn.textContent = 'Retake Photo';
+function toggleNoteSelection(name, color) {
+  const index = currentNotes.findIndex(n => n.note === name);
+  const btns = document.querySelectorAll('.note-btn');
+  if(index === -1) {
+    currentNotes.push({ note: name, color });
+    btns.forEach(b => { if(b.textContent === name) b.classList.add('active'); });
   } else {
-    startCamera();
-    captureBtn.textContent = 'Capture Photo';
+    currentNotes.splice(index, 1);
+    btns.forEach(b => { if(b.textContent === name) b.classList.remove('active'); });
   }
+}
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+.then(stream => video.srcObject = stream)
+.catch(err => alert('Camera access denied'));
+
+// Take photo
+document.getElementById('captureBtn').onclick = () => {
+  const ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  let quality = 0.9;
+  let dataURL = canvas.toDataURL('image/jpeg', quality);
+  while((dataURL.length/1024 > 10) && quality > 0.05) {
+    quality -= 0.05;
+    dataURL = canvas.toDataURL('image/jpeg', quality);
+  }
+  capturedImage = dataURL;
+
+  video.style.display = 'none';
+  canvas.style.display = 'none';
+  document.getElementById('captureBtn').style.display = 'none';
+
+  photoPreview.src = capturedImage;
+  photoPreview.style.display = 'block';
 };
 
-saveBtn.onclick = () => {
-  if (!capturedImage) return alert('Please capture a photo');
-  if (selectedNotes.length === 0) return alert('Please select at least one medicine');
+// Save entry
+document.getElementById('saveBtn').onclick = () => {
+  if(!capturedImage) return alert('Please take a photo first');
+  if(currentNotes.length === 0) return alert('Please select at least one medicine');
 
   const now = new Date();
-  const combinedNotes = selectedNotes.join(', ');
-
   entries.unshift({
     image: capturedImage,
-    note: combinedNotes,
-    color: 'var(--accent)',
+    notes: currentNotes.slice(),
     time: now.toLocaleString(),
     hour: now.getHours()
   });
 
-  if (entries.length > 30) entries = entries.slice(0, 30);
+  if(entries.length > 30) entries = entries.slice(0,30);
   localStorage.setItem('bpEntries', JSON.stringify(entries));
   renderLog();
 
-  preview.style.display = 'none';
-  captureBtn.textContent = 'Capture Photo';
   capturedImage = null;
-  selectedNotes = [];
-  selectedContainer.innerHTML = '';
-  document.querySelectorAll('.note-btn').forEach(btn => btn.classList.remove('active'));
-  startCamera();
+  currentNotes = [];
+  document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('active'));
+  canvas.style.display = 'none';
+  photoPreview.style.display = 'none';
+  document.querySelector('.note-section').style.display = 'none';
+  document.querySelector('.note-buttons').style.display = 'none';
+  document.getElementById('captureBtn').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+  newEntryBtn.style.display = 'block';
 };
 
-doneBtn.onclick = () => {
-  stopCamera();
-  video.style.display = 'none';
-  preview.style.display = 'none';
-  captureBtn.style.display = 'none';
-  saveBtn.style.display = 'none';
-  doneBtn.style.display = 'none';
-  noteButtonsDiv.style.display = 'none';
-  noteTitle.style.display = 'none';
-  topDivider.style.display = 'none';
-  bottomDivider.style.display = 'none';
-  tipText.style.display = 'none';
-  selectedContainer.innerHTML = '';
-  addEntryBtn.style.display = 'block';
+// Start a new entry
+newEntryBtn.onclick = () => {
+  newEntryBtn.style.display = 'none';
+  photoPreview.style.display = 'none';
+  document.querySelector('.note-section').style.display = 'block';
+  document.querySelector('.note-buttons').style.display = 'flex';
+  document.getElementById('captureBtn').style.display = 'block';
+  document.getElementById('saveBtn').style.display = 'block';
+  video.style.display = 'block';
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  .then(stream => video.srcObject = stream)
+  .catch(err => alert('Camera access denied'));
 };
 
+// Clear all
 document.getElementById('clearBtn').onclick = () => {
   const code = prompt('Enter 1234 to clear all entries:');
-  if (code !== '1234') return;
+  if(code !== '1234') return;
   entries = [];
   localStorage.removeItem('bpEntries');
   renderLog();
 };
 
+// Render log
 function renderLog() {
   logDiv.innerHTML = entries.map(e => {
     const isLate = e.hour >= 20;
     const bg = isLate ? 'var(--late-bg)' : 'var(--card-bg)';
+    const notesHTML = e.notes.map(n => `<span style="color:${n.color}; font-weight:bold; font-size:16px; margin-right:4px;">${n.note}</span>`).join('');
     return `
       <div class="entry" style="background:${bg};">
         <div>
           <strong>${e.time}</strong>
-          <span style="color:${e.color}; font-weight:bold; display:block;">
-            ${e.note}
-          </span>
+          <div>${notesHTML}</div>
         </div>
         <img src="${e.image}" alt="BP Photo">
       </div>
     `;
   }).join('');
 }
+
+// iPhone install prompt
+window.addEventListener('load', () => {
+  if (navigator.userAgent.includes('iPhone') && !localStorage.getItem('dismissInstallPrompt')) {
+    document.getElementById('installPrompt').style.display = 'block';
+  }
+
+  document.getElementById('closeInstallPrompt').onclick = () => {
+    document.getElementById('installPrompt').style.display = 'none';
+    localStorage.setItem('dismissInstallPrompt', 'true');
+  };
+});
+
+renderNoteButtons();
+renderLog();
 </script>
 </body>
 </html>
